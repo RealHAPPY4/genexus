@@ -2,7 +2,7 @@ import React from "react";
 
 const HomePage = () => {
     return (
-        <div className="homepage-container flex flex-col items-center justify-center h-screen bg-blue-50 text-center;}" >
+        <div className="homepage-container flex flex-col items-center justify-center h-screen bg-red-200 text-center;}" >
             <header className="header text-4xl font-bold text-gray-800;">
                 <h1>MindEase Chatbot</h1>
                 <p className="text-lg text-gray-600 mt-2;">Your AI-powered mental health companion</p>

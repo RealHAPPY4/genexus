@@ -44,27 +44,31 @@ const HomePage = () => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-200 to-indigo-300 p-4 relative">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-200 to-teal-300 p-4 relative">
             
             {/* Profile Section */}
-            <div className="absolute top-4 right-6 flex items-center space-x-2 bg-white p-2 rounded-full shadow-md">
+            <div className="absolute top-4 right-6 flex items-center space-x-2">
                 <FaUserCircle className="text-3xl text-gray-700" />
                 <span className="text-gray-700 font-semibold">User</span>
             </div>
 
-            {/* Chat Title */}
-            <h1 className="text-3xl font-bold text-white mb-4 shadow-lg">MindEase Chatbot</h1>
-
             {/* Chat Container */}
-            <div className="w-full max-w-4xl bg-gradient-to-b from-white to-gray-100 shadow-2xl rounded-2xl p-5 h-[65vh] overflow-y-auto border border-gray-300">
+            <h1 className="text-3xl font-bold text-gray-800 mb-4">MindEase Chatbot</h1>
+            <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg p-4 h-[65vh] overflow-y-auto border border-gray-300">
                 {messages.map((msg, index) => (
-                    <div key={index} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} my-3`}>
-                        <div 
-                            className={`p-4 rounded-lg shadow-md text-lg transition-all duration-300 transform ${msg.sender === "user" 
-                                ? "bg-gradient-to-r from-blue-500 to-blue-700 text-white" 
-                                : "bg-gradient-to-r from-teal-400 to-teal-600 text-white"} max-w-xs`}
-                        >
+                    <div key={index} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} my-2`}>
+                        <div className={`relative px-4 py-3 rounded-2xl shadow-md max-w-xs transition-all duration-200 transform ${
+                            msg.sender === "user"
+                                ? "bg-gradient-to-r from-blue-500 to-blue-400 text-white"
+                                : "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800"
+                        }`}>
                             {msg.text}
+                            {/* Add subtle tail effect */}
+                            <div className={`absolute bottom-0 w-3 h-3 ${
+                                msg.sender === "user" 
+                                    ? "bg-blue-500 right-2 transform rotate-45"
+                                    : "bg-gray-200 left-2 transform rotate-45"
+                            }`}></div>
                         </div>
                     </div>
                 ))}
@@ -75,14 +79,14 @@ const HomePage = () => {
             <div className="w-full max-w-4xl flex items-center bg-white shadow-lg rounded-full p-3 mt-4 border border-gray-300 relative">
                 <button 
                     onClick={startListening} 
-                    className={`text-gray-600 text-2xl p-3 rounded-full transition-all duration-200 hover:bg-gray-200 ${isListening ? "animate-pulse" : ""} focus:outline-none`}
+                    className={`text-gray-600 text-2xl p-2 rounded-full transition-all duration-200 hover:bg-gray-200 ${isListening ? "animate-pulse" : ""} focus:outline-none`}
                 >
                     <FaMicrophone />
                 </button>
 
                 <input
                     type="text"
-                    className="flex-grow px-5 py-3 outline-none text-lg border-none rounded-full bg-gray-100 focus:bg-white focus:ring-2 focus:ring-indigo-400 transition-all duration-200"
+                    className="flex-grow px-5 py-3 outline-none text-lg border-none rounded-full bg-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-400 transition-all duration-200"
                     placeholder="Type a message..."
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
@@ -90,7 +94,7 @@ const HomePage = () => {
 
                 <button 
                     onClick={sendMessage} 
-                    className="text-white text-2xl bg-gradient-to-r from-indigo-500 to-indigo-700 p-3 rounded-full ml-2 transition-all duration-200 hover:from-indigo-600 hover:to-indigo-800 active:scale-95 focus:outline-none shadow-md"
+                    className="text-white text-2xl bg-blue-500 p-3 rounded-full ml-2 transition-all duration-200 hover:bg-blue-600 active:scale-95 focus:outline-none shadow-md"
                 >
                     <FaPaperPlane />
                 </button>

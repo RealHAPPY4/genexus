@@ -1,176 +1,113 @@
-import React, { useState, useEffect } from "react";
-import { FaMicrophone, FaPaperclip, FaPaperPlane, FaTrash, FaUserCircle } from "react-icons/fa";
-
-// OpenAI API Configuration
-const OPENAI_API_KEY = "your-api-key"; // Replace with your API key
+import React, { useState } from "react";
+import { FaMicrophone, FaPaperclip, FaPaperPlane, FaUserCircle } from "react-icons/fa";
 
 const HomePage = () => {
-    const [messages, setMessages] = useState([
-        { text: "Hello! How can I assist you today?", sender: "bot" }
-    ]);
-    const [input, setInput] = useState("");
-    const [isListening, setIsListening] = useState(false);
-    const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [messages, setMessages] = useState([
+    { text: "Hello! How are you feeling today?", sender: "bot" }
+  ]);
+  const [input, setInput] = useState("");
+  const [isListening, setIsListening] = useState(false);
 
-    // Web Speech API for voice input
-    const recognition = window.SpeechRecognition || window.webkitSpeechRecognition ? 
-        new (window.SpeechRecognition || window.webkitSpeechRecognition)() : null;
+  // Function to handle sending messages
+  const sendMessage = async () => {
+    if (!input.trim()) return;
 
-    useEffect(() => {
-        if (recognition) {
-            recognition.continuous = false;
-            recognition.lang = "en-US";
-            recognition.onresult = (event) => {
-                setInput(event.results[0][0].transcript);
-            };
-            recognition.onerror = (event) => console.error("Speech Recognition Error:", event.error);
-        }
-    }, []);
+    const newMessage = { text: input, sender: "user" };
+    setMessages([...messages, newMessage]); // Update UI instantly
+    setInput("");
 
-    // Function to handle sending a message
-    const sendMessage = async (messageText) => {
-        if (!messageText.trim()) return;
+    try {
+      const response = await fetch("http://127.0.0.1:5000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: input }),
+      });
 
-        setMessages([...messages, { text: messageText, sender: "user" }]);
-        setInput("");
+      const data = await response.json();
+      const botResponse = { text: data.reply, sender: "bot" };
+      setMessages([...messages, newMessage, botResponse]); // Update UI with bot response
+    } catch (error) {
+      console.error("Error connecting to chatbot:", error);
+    }
+  };
 
-        try {
-            const response = await fetch("https://api.openai.com/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${OPENAI_API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: "gpt-3.5-turbo",
-                    messages: [{ role: "user", content: messageText }]
-                })
-            });
+  // Function to handle voice input
+  const startListening = () => {
+    const recognition = new window.webkitSpeechRecognition();
+    recognition.lang = "en-US";
 
-            const data = await response.json();
-            const botReply = data.choices?.[0]?.message?.content || "Sorry, I couldn't understand.";
-
-            setMessages((prevMessages) => [...prevMessages, { text: botReply, sender: "bot" }]);
-        } catch (error) {
-            console.error("Error fetching AI response:", error);
-        }
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onresult = (event) => {
+      setInput(event.results[0][0].transcript);
     };
 
-    // Function to handle voice input
-    const handleVoiceInput = () => {
-        if (!recognition) return alert("Voice input not supported in this browser.");
-        setIsListening(true);
-        recognition.start();
-        recognition.onend = () => setIsListening(false);
-    };
+    recognition.start();
+  };
 
-    // Function to clear the chat
-    const clearChat = () => setMessages([]);
-
-    // Pre-set conversation starters
-    const quickReplies = ["I feel anxious", "I need relaxation", "Give me motivation", "Help me sleep"];
-
-    return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-200 to-teal-400 p-4">
-            {/* Header Section */}
-            <div className="w-full max-w-4xl flex justify-between items-center p-4 bg-white shadow-md rounded-xl">
-                <h1 className="text-3xl font-bold text-gray-800">MindEase Chatbot</h1>
-                
-                {/* User Profile */}
-                <div className="relative">
-                    <button
-                        className="text-gray-700 text-3xl focus:outline-none"
-                        onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    >
-                        <FaUserCircle />
-                    </button>
-
-                    {/* Profile Dropdown */}
-                    {showProfileMenu && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg">
-                            <ul className="py-2 text-gray-700">
-                                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">View Profile</li>
-                                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Logout</li>
-                            </ul>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Quick Replies */}
-            <div className="quick-replies flex flex-wrap gap-3 my-4 justify-center">
-                {quickReplies.map((text, index) => (
-                    <button
-                        key={index}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-full text-sm hover:bg-blue-600 transition"
-                        onClick={() => sendMessage(text)}
-                    >
-                        {text}
-                    </button>
-                ))}
-            </div>
-
-            {/* Chatbox */}
-            <main className="chatbox w-full max-w-4xl h-[60vh] bg-gray-100 shadow-inner rounded-lg p-5 overflow-y-auto border border-gray-300">
-                {messages.length === 0 ? (
-                    <p className="text-gray-500 text-lg text-center">Chat cleared. Start a new conversation!</p>
-                ) : (
-                    messages.map((msg, index) => (
-                        <div key={index} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} mb-2`}>
-                            <p className={`p-3 rounded-xl max-w-xs md:max-w-md ${msg.sender === "user" ? "bg-blue-500 text-white" : "bg-gray-200 text-black"}`}>
-                                {msg.text}
-                            </p>
-                        </div>
-                    ))
-                )}
-            </main>
-
-            {/* Clear Chat Button */}
-            <div className="flex justify-center mt-4">
-                <button
-                    className="px-4 py-2 bg-red-500 text-white rounded-lg flex items-center gap-2 hover:bg-red-600 transition"
-                    onClick={clearChat}
-                >
-                    <FaTrash /> Clear Chat
-                </button>
-            </div>
-
-            {/* Input Area */}
-            <div className="input-area flex w-full max-w-4xl mt-4 items-center bg-white rounded-full shadow-lg p-2 border border-gray-300">
-                {/* Voice Input Button */}
-                <button 
-                    className={`p-3 rounded-full mx-2 transition ${isListening ? "bg-red-400" : "bg-gray-300 hover:bg-gray-400"}`}
-                    onClick={handleVoiceInput}
-                >
-                    <FaMicrophone className="text-gray-700" />
-                </button>
-
-                {/* Text Input */}
-                <input
-                    type="text"
-                    className="flex-1 p-3 border-none focus:outline-none text-lg"
-                    placeholder="Type a message..."
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && sendMessage(input)}
-                />
-
-                {/* File Upload */}
-                <label className="p-3 bg-gray-300 hover:bg-gray-400 transition cursor-pointer mx-2 rounded-full">
-                    <FaPaperclip className="text-gray-700" />
-                    <input type="file" className="hidden" />
-                </label>
-
-                {/* Send Button */}
-                <button
-                    className="p-3 bg-blue-500 text-white rounded-full mx-2 hover:bg-blue-600 transition"
-                    onClick={() => sendMessage(input)}
-                >
-                    <FaPaperPlane />
-                </button>
-            </div>
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 to-teal-200 p-4">
+      
+      {/* Header Section */}
+      <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg p-4 flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-800">MindEase Chatbot</h1>
+        <div className="flex items-center space-x-2 cursor-pointer">
+          <FaUserCircle className="text-gray-600 text-2xl" />
+          <span className="text-gray-700">User Profile</span>
         </div>
-    );
+      </div>
+
+      {/* Quick Action Buttons */}
+      <div className="w-full max-w-4xl flex justify-center gap-3 my-4">
+        <button className="bg-blue-500 text-white px-4 py-2 rounded-full flex items-center gap-2">
+          ❤️ I feel anxious
+        </button>
+        <button className="bg-blue-500 text-white px-4 py-2 rounded-full flex items-center gap-2">
+          🎵 I need relaxation
+        </button>
+        <button className="bg-blue-500 text-white px-4 py-2 rounded-full flex items-center gap-2">
+          😊 Give me motivation
+        </button>
+        <button className="bg-blue-500 text-white px-4 py-2 rounded-full flex items-center gap-2">
+          🛏️ Help me sleep
+        </button>
+      </div>
+
+      {/* Chat Box */}
+      <div className="w-full max-w-4xl bg-white shadow-md rounded-lg p-4 h-[60vh] overflow-y-auto">
+        {messages.map((msg, index) => (
+          <div key={index} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} my-2`}>
+            <div className={`p-3 rounded-lg shadow-md ${msg.sender === "user" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"} max-w-xs`}>
+              {msg.text}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Message Input */}
+      <div className="w-full max-w-4xl flex items-center bg-white shadow-lg rounded-full p-3 mt-4">
+        <button onClick={startListening} className={`text-gray-600 text-xl ${isListening ? "animate-pulse" : ""}`}>
+          <FaMicrophone />
+        </button>
+        <input
+          type="text"
+          className="flex-grow px-4 py-2 outline-none"
+          placeholder="Type a message..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+        />
+        <button className="text-gray-600 text-xl">
+          <FaPaperclip />
+        </button>
+        <button onClick={sendMessage} className="text-blue-500 text-xl ml-2">
+          <FaPaperPlane />
+        </button>
+      </div>
+
+    </div>
+  );
 };
 
 export default HomePage;
